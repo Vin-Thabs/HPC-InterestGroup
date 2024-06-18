@@ -1,0 +1,15 @@
+P3 1218 940 255
+Repeats the run 3 times
+Sequential elapsed time: 	0.00871694
+Parallel elapsed time: 		0.0221081
+The speedup is:			0.394287
+P3 1218 940 255
+Repeats the run 3 times
+Sequential elapsed time: 	0.00814543
+Parallel elapsed time: 		0.0207197
+The speedup is:			0.393124
+P3 1218 940 255
+Repeats the run 3 times
+Sequential elapsed time: 	0.0080001
+Parallel elapsed time: 		0.0067224
+The speedup is:			1.19006

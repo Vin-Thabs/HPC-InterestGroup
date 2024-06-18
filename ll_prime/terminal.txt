@@ -1,0 +1,8 @@
+CORRECT. seq_cnt = 14853 par_cnt = 14853
+Serial time: 		1.05879
+Parallel time: 		1.0611
+Speedup: 		0.997823
+CORRECT. seq_cnt = 14853 par_cnt = 14853
+Serial time: 		1.06518
+Parallel time: 		1.05238
+Speedup: 		1.01216
