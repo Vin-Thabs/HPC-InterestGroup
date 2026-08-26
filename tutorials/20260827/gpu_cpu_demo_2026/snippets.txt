@@ -1,0 +1,135 @@
+============================================================
+PASTE STEP 1: BASIC GPU KERNEL
+Paste at marker: PASTE STEP 1
+============================================================
+
+__global__ void count_neighbours_basic(const Point *points, int *neighbour_counts, int point_count) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= point_count) return;
+
+    const float radius = 0.047f;
+    int neighbours = 0;
+    for (int j = 0; j < point_count; ++j) {
+        float dx = points[j].x - points[i].x;
+        float dy = points[j].y - points[i].y;
+        float distance = sqrtf(dx * dx + dy * dy);
+        if (i != j && distance < radius) ++neighbours;
+    }
+    neighbour_counts[i] = neighbours;
+}
+
+
+============================================================
+PASTE STEP 2: BASIC GPU KERNEL LAUNCH
+Paste at marker: PASTE STEP 2
+============================================================
+
+    count_neighbours_basic<<<block_count, threads_per_block>>>(device_points, device_counts, point_count);
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaDeviceSynchronize());
+    CUDA_CHECK(cudaEventRecord(event_start));
+    for (int r = 0; r < timing_repeats; ++r)
+        count_neighbours_basic<<<block_count, threads_per_block>>>(device_points, device_counts, point_count);
+    float basic_ms = finish_kernel_timing(event_start, event_stop, timing_repeats);
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaMemcpy(gpu_counts, device_counts, point_count * sizeof(int), cudaMemcpyDeviceToHost));
+    timings[timing_count++] = {"GPU basic", basic_ms, validate_counts(cpu_counts, gpu_counts, point_count)};
+
+
+============================================================
+PASTE STEP 3: SQUARED DISTANCE GPU KERNEL
+Paste at marker: PASTE STEP 3
+============================================================
+
+__global__ void count_neighbours_squared(const Point *points, int *neighbour_counts, int point_count) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= point_count) return;
+
+    const float radius_squared = 0.047f * 0.047f;
+    Point current_point = points[i];
+    int neighbours = 0;
+    for (int j = 0; j < point_count; ++j) {
+        float dx = points[j].x - current_point.x;
+        float dy = points[j].y - current_point.y;
+        float distance_squared = dx * dx + dy * dy;
+        if (i != j && distance_squared < radius_squared) ++neighbours;
+    }
+    neighbour_counts[i] = neighbours;
+}
+
+
+============================================================
+PASTE STEP 4: SQUARED DISTANCE GPU KERNEL LAUNCH
+Paste at marker: PASTE STEP 4
+============================================================
+
+    count_neighbours_squared<<<block_count, threads_per_block>>>(device_points, device_counts, point_count);
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaDeviceSynchronize());
+    CUDA_CHECK(cudaEventRecord(event_start));
+    for (int r = 0; r < timing_repeats; ++r)
+        count_neighbours_squared<<<block_count, threads_per_block>>>(device_points, device_counts, point_count);
+    float squared_ms = finish_kernel_timing(event_start, event_stop, timing_repeats);
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaMemcpy(gpu_counts, device_counts, point_count * sizeof(int), cudaMemcpyDeviceToHost));
+    timings[timing_count++] = {"GPU squared distance", squared_ms, validate_counts(cpu_counts, gpu_counts, point_count)};
+
+
+============================================================
+PASTE STEP 5: SHARED MEMORY GPU KERNEL
+Paste at marker: PASTE STEP 5
+============================================================
+
+__global__ void count_neighbours_shared(const Point *points, int *neighbour_counts, int point_count) {
+    extern __shared__ Point tile[];
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    Point current_point{};
+    if (i < point_count) current_point = points[i];
+    const float radius_squared = 0.047f * 0.047f;
+    int neighbours = 0;
+
+    for (int start = 0; start < point_count; start += blockDim.x) {
+        int j = start + threadIdx.x;
+        if (j < point_count) tile[threadIdx.x] = points[j];
+        __syncthreads();
+
+        int tile_count = point_count - start;
+        if (tile_count > blockDim.x) tile_count = blockDim.x;
+        if (i < point_count) {
+            for (int k = 0; k < tile_count; ++k) {
+                float dx = tile[k].x - current_point.x;
+                float dy = tile[k].y - current_point.y;
+                float distance_squared = dx * dx + dy * dy;
+                if (start + k != i && distance_squared < radius_squared) ++neighbours;
+            }
+        }
+        __syncthreads();
+    }
+    if (i < point_count) neighbour_counts[i] = neighbours;
+}
+
+
+============================================================
+PASTE STEP 6: SHARED MEMORY GPU KERNEL LAUNCH
+Paste at marker: PASTE STEP 6
+============================================================
+
+    size_t shared_bytes = threads_per_block * sizeof(Point);
+    count_neighbours_shared<<<block_count, threads_per_block, shared_bytes>>>(device_points, device_counts, point_count);
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaDeviceSynchronize());
+    CUDA_CHECK(cudaEventRecord(event_start));
+    for (int r = 0; r < timing_repeats; ++r)
+        count_neighbours_shared<<<block_count, threads_per_block, shared_bytes>>>(device_points, device_counts, point_count);
+    float shared_ms = finish_kernel_timing(event_start, event_stop, timing_repeats);
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaMemcpy(gpu_counts, device_counts, point_count * sizeof(int), cudaMemcpyDeviceToHost));
+    timings[timing_count++] = {"GPU shared memory", shared_ms, validate_counts(cpu_counts, gpu_counts, point_count)};
+
+
+============================================================
+OPTIMISATION 3: THREADS PER BLOCK
+No code to paste. The argument handling is already provided.
+============================================================
+
+Run the completed programme with 32, 64, 128, 256, or 512 as its argument.
