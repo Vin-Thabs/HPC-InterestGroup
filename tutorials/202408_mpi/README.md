@@ -37,7 +37,8 @@ In summary, communication is very important as one process may need results or i
 
 >**Side note:** this is an opportunity to combine your software development skills with your knowledge of High-Performance Computing (HPC). Many scientific applications still need to be adapted for MPI or OpenMP. So I want to emphasize the importance of taking your math courses seriously. While you may not always need to master the mathematical concepts, having a solid understanding will be beneficial when it comes time to implement these concepts in practical applications. This is a just a snippet of a paper giving an overview of how an application works:
 >
->![math](https://github.com/froggomelo/test-repo/blob/cc150fe9b357ed73b9f3cda98cbff62a96fd7b93/Untitled.png)  
+> ![math](https://github.com/WitsHPC/HPC-InterestGroup/blob/main/tutorials/202408_mpi/parrallel_paper.png?raw=true)
+
 
 
 # MPI vs OpenMP
@@ -68,11 +69,6 @@ Follow the instructions in lammps_install.md to see the results of different com
 >**Considerations when running MPI-enabled programs:** Not all applications utilize every core or run optimally on every core. It is important to carefully consider the number of processes(and threads) you choose to use. Be sure to investigate the correlation between your problem size and the number of processes to ensure optimal performance.
 
 # Example  
-Run the following commands to set the environment variables to use mpich:
-```bash
-export PATH=/usr/local/mpich-4.1.1/bin:$PATH
-export CPATH=/usr/local/mpich-4.1.1/include:$CPATH
-```
 Follow the instructions here to run the example: [How to build and run an MPI program](https://github.com/WitsHPC/HPC-InterestGroup/blob/b54e9b4200d57a3ef85e7bc487b5eb9dfdd572f3/tutorials/202305_mpi/README.md)
 ```bash
 #include <iostream>
